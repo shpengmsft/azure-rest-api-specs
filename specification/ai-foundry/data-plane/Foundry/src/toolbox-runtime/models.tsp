@@ -20,6 +20,10 @@ union ToolsetMCPMethodName {
   initialized: "notifications/initialized",
   list: "tools/list",
   call: "tools/call",
+  taskGet: "tasks/get",
+  taskResult: "tasks/result",
+  taskCancel: "tasks/cancel",
+  taskList: "tasks/list",
 }
 
 /**
@@ -83,13 +87,53 @@ model ToolsetMCPClientCapabilities {
 }
 
 /**
- * Capabilities that the server supports (tools-only subset).
+ * Declares which request types can be augmented with tasks.
+ */
+model ToolsetMCPTaskRequests {
+  /**
+   * Task support for tool-related requests.
+   */
+  tools?: {
+    /**
+     * Whether the server supports task-augmented tools/call requests.
+     */
+    call?: Record<unknown>;
+  };
+}
+
+/**
+ * Server task capability declaration.
+ */
+model ToolsetMCPTasksCapability {
+  /**
+   * Whether this server supports tasks/list.
+   */
+  list?: Record<unknown>;
+
+  /**
+   * Whether this server supports tasks/cancel.
+   */
+  cancel?: Record<unknown>;
+
+  /**
+   * Specifies which request types can be augmented with tasks.
+   */
+  requests?: ToolsetMCPTaskRequests;
+}
+
+/**
+ * Capabilities that the server supports.
  */
 model ToolsetMCPServerCapabilities {
   /**
    * Present if the server offers any tools to call.
    */
   tools?: ToolsetMCPToolsCapability;
+
+  /**
+   * Present if the server supports task-augmented requests.
+   */
+  tasks?: ToolsetMCPTasksCapability;
 }
 
 /**
@@ -148,6 +192,16 @@ model ToolsetMCPPaginatedRequestParams {
 }
 
 /**
+ * Metadata for augmenting a request with task execution.
+ */
+model ToolsetMCPTaskMetadata {
+  /**
+   * Requested duration in milliseconds to retain task from creation.
+   */
+  ttl?: int64;
+}
+
+/**
  * Parameters for a tools/call request.
  */
 model ToolsetMCPCallToolRequestParams {
@@ -165,6 +219,12 @@ model ToolsetMCPCallToolRequestParams {
    * Arguments to pass to the tool.
    */
   arguments?: Record<unknown>;
+
+  /**
+   * Optional task metadata for requesting async execution.
+   * When present, the server returns a CreateTaskResult instead of CallToolResult.
+   */
+  task?: ToolsetMCPTaskMetadata;
 }
 
 /**
@@ -225,6 +285,78 @@ union ToolsetMCPJsonRpcRequest {
   ToolsetMCPInitializeRequest,
   ToolsetMCPListToolsRequest,
   ToolsetMCPCallToolRequest,
+  ToolsetMCPGetTaskRequest,
+  ToolsetMCPGetTaskPayloadRequest,
+  ToolsetMCPCancelTaskRequest,
+  ToolsetMCPListTasksRequest,
+}
+
+/**
+ * JSON-RPC request for tasks/get.
+ */
+model ToolsetMCPGetTaskRequest {
+  ...ToolsetMCPJsonRpcRequestBase;
+
+  /**
+   * The MCP method name.
+   */
+  method: "tasks/get";
+
+  /**
+   * Task request parameters.
+   */
+  params: ToolsetMCPTaskRequestParams;
+}
+
+/**
+ * JSON-RPC request for tasks/result.
+ */
+model ToolsetMCPGetTaskPayloadRequest {
+  ...ToolsetMCPJsonRpcRequestBase;
+
+  /**
+   * The MCP method name.
+   */
+  method: "tasks/result";
+
+  /**
+   * Task request parameters.
+   */
+  params: ToolsetMCPTaskRequestParams;
+}
+
+/**
+ * JSON-RPC request for tasks/cancel.
+ */
+model ToolsetMCPCancelTaskRequest {
+  ...ToolsetMCPJsonRpcRequestBase;
+
+  /**
+   * The MCP method name.
+   */
+  method: "tasks/cancel";
+
+  /**
+   * Task request parameters.
+   */
+  params: ToolsetMCPTaskRequestParams;
+}
+
+/**
+ * JSON-RPC request for tasks/list.
+ */
+model ToolsetMCPListTasksRequest {
+  ...ToolsetMCPJsonRpcRequestBase;
+
+  /**
+   * The MCP method name.
+   */
+  method: "tasks/list";
+
+  /**
+   * Optional pagination parameters.
+   */
+  params?: ToolsetMCPPaginatedRequestParams;
 }
 
 /**
@@ -283,6 +415,19 @@ model ToolsetMCPToolAnnotations {
 }
 
 /**
+ * Execution-related properties for a tool.
+ */
+model ToolsetMCPToolExecution {
+  /**
+   * Indicates whether this tool supports task-augmented execution.
+   * - "forbidden": Tool does not support task-augmented execution (default when absent)
+   * - "optional": Tool may support task-augmented execution
+   * - "required": Tool requires task-augmented execution
+   */
+  taskSupport?: "forbidden" | "optional" | "required";
+}
+
+/**
  * A tool definition returned from tools/list.
  */
 model ToolsetMCPTool {
@@ -310,6 +455,11 @@ model ToolsetMCPTool {
    * Optional JSON schema describing structured tool output.
    */
   outputSchema?: ToolsetMCPObjectSchema;
+
+  /**
+   * Execution-related properties for this tool.
+   */
+  execution?: ToolsetMCPToolExecution;
 
   /**
    * Optional additional tool annotations.
@@ -509,7 +659,7 @@ model ToolsetMCPListToolsResult {
 }
 
 /**
- * Result payload for tools/call.
+ * Result payload for tools/call (synchronous execution).
  */
 model ToolsetMCPCallToolResult {
   /**
@@ -531,6 +681,22 @@ model ToolsetMCPCallToolResult {
    * Indicates whether the tool call result represents an error.
    */
   isError?: boolean;
+}
+
+/**
+ * Result payload for a task-augmented tools/call request.
+ * Returned instead of CallToolResult when the request includes task metadata.
+ */
+model ToolsetMCPCreateTaskResult {
+  /**
+   * Optional metadata for protocol-level extensions.
+   */
+  _meta?: ToolsetMCPMeta;
+
+  /**
+   * The created task.
+   */
+  task: ToolsetMCPTask;
 }
 
 /**
@@ -570,6 +736,10 @@ union ToolsetMCPJsonRpcResult {
   ToolsetMCPInitializeResult,
   ToolsetMCPListToolsResult,
   ToolsetMCPCallToolResult,
+  ToolsetMCPCreateTaskResult,
+  ToolsetMCPGetTaskResult,
+  ToolsetMCPCancelTaskResult,
+  ToolsetMCPListTasksResult,
 }
 
 /**
@@ -658,12 +828,139 @@ union ToolsetMCPJsonRpcMessage {
 }
 
 /**
+ * Parameters for tasks/get, tasks/result, or tasks/cancel requests.
+ */
+model ToolsetMCPTaskRequestParams {
+  /**
+   * Optional metadata for protocol-level extensions.
+   */
+  _meta?: ToolsetMCPMeta;
+
+  /**
+   * The task identifier.
+   */
+  taskId: string;
+}
+
+/**
+ * The status of a task.
+ */
+union ToolsetMCPTaskStatus {
+  working: "working",
+  inputRequired: "input_required",
+  completed: "completed",
+  failed: "failed",
+  cancelled: "cancelled",
+}
+
+/**
+ * Data associated with a task.
+ * Matches MCP spec Task interface.
+ */
+model ToolsetMCPTask {
+  /**
+   * The unique task identifier.
+   */
+  taskId: string;
+
+  /**
+   * Current task status.
+   */
+  status: ToolsetMCPTaskStatus;
+
+  /**
+   * Optional human-readable status message.
+   */
+  statusMessage?: string;
+
+  /**
+   * ISO 8601 timestamp when the task was created.
+   */
+  createdAt: string;
+
+  /**
+   * ISO 8601 timestamp when the task was last updated.
+   */
+  lastUpdatedAt: string;
+
+  /**
+   * Actual retention duration from creation in milliseconds, null for unlimited.
+   */
+  ttl: int64 | null;
+
+  /**
+   * Suggested polling interval in milliseconds.
+   */
+  pollInterval?: int64;
+}
+
+/**
+ * Result payload for tasks/get.
+ * Returns the task's current status. Matches MCP spec GetTaskResult = Result & Task.
+ */
+model ToolsetMCPGetTaskResult {
+  /**
+   * Optional metadata for protocol-level extensions.
+   */
+  _meta?: ToolsetMCPMeta;
+
+  /**
+   * The task with current status.
+   */
+  ...ToolsetMCPTask;
+}
+
+/**
+ * Result payload for tasks/result.
+ * Returns the original request's result. For tools/call tasks, this is CallToolResult.
+ * Using CallToolResult directly since tools/call is the only task-augmentable request.
+ */
+// tasks/result reuses ToolsetMCPCallToolResult — no separate model needed.
+
+/**
+ * Result payload for tasks/cancel.
+ * Returns the cancelled task's status. Matches MCP spec CancelTaskResult = Result & Task.
+ */
+model ToolsetMCPCancelTaskResult {
+  /**
+   * Optional metadata for protocol-level extensions.
+   */
+  _meta?: ToolsetMCPMeta;
+
+  /**
+   * The cancelled task.
+   */
+  ...ToolsetMCPTask;
+}
+
+/**
+ * Result payload for tasks/list.
+ */
+model ToolsetMCPListTasksResult {
+  /**
+   * Optional metadata for protocol-level extensions.
+   */
+  _meta?: ToolsetMCPMeta;
+
+  /**
+   * Cursor to retrieve the next page.
+   */
+  nextCursor?: string;
+
+  /**
+   * The list of tasks.
+   */
+  tasks: ToolsetMCPTask[];
+}
+
+/**
  * Method parameters accepted by the toolset MCP endpoint.
  */
 union ToolsetMCPInvokeRequestParams {
   ToolsetMCPInitializeRequestParams,
   ToolsetMCPPaginatedRequestParams,
   ToolsetMCPCallToolRequestParams,
+  ToolsetMCPTaskRequestParams,
 }
 
 /**
