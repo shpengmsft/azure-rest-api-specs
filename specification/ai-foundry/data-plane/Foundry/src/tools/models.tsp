@@ -43,15 +43,37 @@ namespace Azure.AI.Projects {
   #suppress "@azure-tools/typespec-azure-core/experimental-feature" "Using experimental feature"
   @@copyVariants(OpenAI.IncludeEnum, Azure.AI.Projects._AgentIncludable);
 
+  /**
+   * Configuration for tool deferral behavior when tool search is enabled.
+   * Controls whether a tool's sub-tools are deferred from tools/list and only
+   * discoverable via tool_search queries.
+   */
+  model ToolDeferConfig {
+    /**
+     * Whether deferral is enabled for this tool's sub-tools.
+     * Default: true when a ToolSearchTool is present in the toolbox.
+     */
+    enabled?: boolean;
+
+    /**
+     * Optional deferral mode. Reserved for future use.
+     */
+    mode?: string;
+
+    /**
+     * Whether this tool is pinned (always visible in tools/list regardless of deferral).
+     */
+    pinned?: boolean;
+  }
+
   #suppress "@azure-tools/typespec-azure-core/experimental-feature" "Using experimental feature"
   @@copyProperties(OpenAI.Tool,
     {
       /**
-       * Whether this tool's sub-tools should be deferred from tools/list when tool search is enabled.
-       * When true, the tool's sub-tools are only discoverable via tool_search.
-       * Default: true when a ToolSearchTool is present in the toolbox.
+       * Tool deferral configuration. Controls whether this tool's sub-tools are
+       * deferred from tools/list when tool search is enabled.
        */
-      deferred_tools?: boolean,
+      defer?: ToolDeferConfig,
     }
   );
 
@@ -62,13 +84,6 @@ namespace Azure.AI.Projects {
        * The connection ID in the project for the MCP server. The connection stores authentication and other connection details needed to connect to the MCP server.
        */
       project_connection_id?: string,
-
-      /**
-       * Per-tool overrides for defer behavior. Each entry maps a tool name to a boolean.
-       * false = always visible in tools/list (not deferred).
-       * true = deferred (only discoverable via tool_search).
-       */
-      deferred_tools_overrides?: Record<boolean>[],
     }
   );
 
