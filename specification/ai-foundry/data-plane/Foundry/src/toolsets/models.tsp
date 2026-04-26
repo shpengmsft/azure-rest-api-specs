@@ -15,6 +15,21 @@ union ToolsetObjectType {
   toolsetDeleted: "toolset.deleted",
 }
 
+/**
+ * The load mode for a tool when tool search is enabled.
+ * Controls how the tool appears in `tools/list` responses.
+ */
+union ToolLoadMode {
+  /** Tool appears in `tools/list` with its full schema (name, description, inputSchema). */
+  always: "always",
+
+  /** Tool appears in `tools/list` with name and description only (no inputSchema). */
+  descriptions_only: "descriptions_only",
+
+  /** Tool is hidden from `tools/list` and only discoverable via `tool_search` queries. */
+  defer: "defer",
+}
+
 @doc("A toolset that stores reusable tool definitions for agents.")
 model ToolsetObject {
   @doc("The object type, which is always 'toolset'.")
@@ -44,9 +59,10 @@ model ToolsetObject {
 
   @doc("The list of tools contained in this toolset.")
   tools: OpenAI.Tool[];
-}
 
-@doc("Response returned when a toolset is deleted.")
+  @doc("A map of tool name patterns to load modes, controlling how tools appear when tool search is enabled.")
+  load?: Record<ToolLoadMode>;
+}
 model DeleteToolsetResponse {
   @doc("The object type. Always 'toolset.deleted'.")
   object: ToolsetObjectType.toolsetDeleted;
@@ -72,6 +88,9 @@ alias CreateToolsetRequest = {
 
   @doc("The list of tools to include in the toolset.")
   tools: OpenAI.Tool[];
+
+  @doc("A map of tool name patterns to load modes, controlling how tools appear when tool search is enabled.")
+  load?: Record<ToolLoadMode>;
 };
 
 alias UpdateToolsetRequest = {
@@ -88,6 +107,9 @@ alias UpdateToolsetRequest = {
 
   @doc("The list of tools to include in the toolset.")
   tools: OpenAI.Tool[];
+
+  @doc("A map of tool name patterns to load modes, controlling how tools appear when tool search is enabled.")
+  load?: Record<ToolLoadMode>;
 };
 
 alias GetToolsetRequest = {
