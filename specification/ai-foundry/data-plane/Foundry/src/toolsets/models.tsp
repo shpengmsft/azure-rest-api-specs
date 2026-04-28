@@ -15,20 +15,6 @@ union ToolsetObjectType {
   toolsetDeleted: "toolset.deleted",
 }
 
-/**
- * The load mode for a tool when tool search is enabled.
- * Controls how the tool appears in `tools/list` responses.
- */
-union ToolLoadMode {
-  /** Tool appears in `tools/list` with its full schema (name, description, inputSchema). */
-  always: "always",
-
-  /** Tool appears in `tools/list` with name and description only (no inputSchema). */
-  descriptions_only: "descriptions_only",
-
-  /** Tool is hidden from `tools/list` and only discoverable via `tool_search` queries. */
-  defer: "defer",
-}
 
 @doc("A toolset that stores reusable tool definitions for agents.")
 model ToolsetObject {

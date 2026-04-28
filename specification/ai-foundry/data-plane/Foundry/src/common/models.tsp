@@ -67,6 +67,7 @@ union FoundryFeaturesOptInKeys {
   insights_v1_preview: "Insights=V1Preview",
   memory_stores_v1_preview: "MemoryStores=V1Preview",
   toolset_v1_preview: "Toolsets=V1Preview",
+  toolboxes_v1_preview: "Toolboxes=V1Preview",
   agent_endpoint_v1_preview: "AgentEndpoints=V1Preview",
 }
 
