@@ -70,7 +70,7 @@ model ToolboxVersionObject {
   @doc("The list of tools contained in this toolbox version.")
   tools: OpenAI.Tool[];
 
-  @doc("Tool load policy for the toolbox version. Maps tool names (or `all` as a catch-all) to a ToolLoadMode that controls how each tool appears in `tools/list` when tool search is enabled. Resolution order: exact tool name > catch-all (`all`). When omitted and a ToolSearchTool is present, defaults to `{\"all\": \"defer\"}`.")
+  @doc("Tool load policy for the toolbox version. Maps tool names (or `all` as a catch-all) to a ToolLoadMode that controls how each tool appears in `tools/list` when tool search is enabled. Resolution order: exact tool name > catch-all (`all`). When omitted and a ToolboxSearchPreviewTool is present, defaults to `{\"all\": \"defer\"}`.")
   load?: Record<ToolLoadMode>;
 
   @doc("Policy configuration for the toolbox version.")
@@ -93,7 +93,7 @@ alias CreateToolboxVersionRequest = {
   @doc("The list of tools to include in this version.")
   tools: OpenAI.Tool[];
 
-  @doc("Tool load policy for the toolbox version. Maps tool names (or `all` as a catch-all) to a ToolLoadMode that controls how each tool appears in `tools/list` when tool search is enabled. Resolution order: exact tool name > catch-all (`all`). When omitted and a ToolSearchTool is present, defaults to `{\"all\": \"defer\"}`.")
+  @doc("Tool load policy for the toolbox version. Maps tool names (or `all` as a catch-all) to a ToolLoadMode that controls how each tool appears in `tools/list` when tool search is enabled. Resolution order: exact tool name > catch-all (`all`). When omitted and a ToolboxSearchPreviewTool is present, defaults to `{\"all\": \"defer\"}`.")
   load?: Record<ToolLoadMode>;
 
   @doc("Policy configuration for this toolbox version.")
