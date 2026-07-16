@@ -34,7 +34,7 @@ options:
       - "specification/ai-foundry/data-plane/Foundry/src/deployments/"
       - "specification/ai-foundry/data-plane/Foundry/src/red-teams/"
       - "specification/ai-foundry/data-plane/Foundry/src/evaluation-rules/"
-      - "specification/ai-foundry/data-plane/Foundry/src/openai-evaluations/"
+      - "specification/ai-foundry/data-plane/Foundry/src/openai/evaluations/"
       - "specification/ai-foundry/data-plane/Foundry/src/evaluation-taxonomies/"
       - "specification/ai-foundry/data-plane/Foundry/src/evaluators/"
       - "specification/ai-foundry/data-plane/Foundry/src/insights/"
@@ -51,11 +51,12 @@ options:
   # - run `cd .. && tsp-client generate`
   "typespec-extension-exporter":
     keys: x-ms-foundry-meta
+    language: java
     output-shape: tsp-ast-input
     output-format: csv
     output-file: beta-annotations.csv
     emitter-output-dir: "{cwd}/../customizations" # run npx tsp compile from within `TempTypeSpecFiles` folder
-    java-namespace: com.azure.ai.agents
+    namespace: com.azure.ai.agents
 imports:
   - "@azure-tools/typespec-azure-core"
   - "@azure-tools/typespec-azure-core/experimental"

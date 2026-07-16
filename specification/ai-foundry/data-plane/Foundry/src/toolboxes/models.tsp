@@ -4,6 +4,7 @@ import "../agents/models.tsp";
 import "../skills/models.tsp";
 
 using TypeSpec.Http;
+using TypeSpec.OpenAPI;
 
 namespace Azure.AI.Projects;
 
@@ -64,7 +65,7 @@ model WithFieldsOptional<Source, Keys extends string> {
  * Spreads tool-specific fields from `Source`, excluding fields owned by `ToolboxTool`.
  */
 alias ToolFields<Source> = {
-  ...OmitProperties<Source, "name" | "description" | "type">;
+  ...OmitProperties<Source, "name" | "description" | "type" | "tool_configs">;
 };
 
 alias ToolboxCodeInterpreterToolType = "code_interpreter";
@@ -78,6 +79,7 @@ alias ToolboxBrowserAutomationPreviewToolType = "browser_automation_preview";
 alias ToolboxReminderPreviewToolType = "reminder_preview";
 alias ToolboxWorkIQPreviewToolType = "work_iq_preview";
 alias ToolboxFabricIQPreviewToolType = "fabric_iq_preview";
+alias ToolboxSearchToolType = "toolbox_search";
 alias ToolboxSearchPreviewToolType = "toolbox_search_preview";
 
 /**
@@ -95,6 +97,7 @@ union ToolboxToolType {
   reminder_preview: ToolboxReminderPreviewToolType,
   work_iq_preview: ToolboxWorkIQPreviewToolType,
   fabric_iq_preview: ToolboxFabricIQPreviewToolType,
+  toolbox_search: ToolboxSearchToolType,
   toolbox_search_preview: ToolboxSearchPreviewToolType,
 }
 
@@ -172,6 +175,7 @@ model OpenApiToolboxTool extends ToolboxTool {
 /**
  * An A2A tool stored in a toolbox.
  */
+@extension("x-ms-foundry-meta", PreviewTool)
 model A2APreviewToolboxTool extends ToolboxTool {
   type: ToolboxA2APreviewToolType;
 
@@ -181,6 +185,7 @@ model A2APreviewToolboxTool extends ToolboxTool {
 /**
  * A browser automation tool stored in a toolbox.
  */
+@extension("x-ms-foundry-meta", PreviewTool)
 model BrowserAutomationPreviewToolboxTool extends ToolboxTool {
   type: ToolboxBrowserAutomationPreviewToolType;
 
@@ -190,6 +195,7 @@ model BrowserAutomationPreviewToolboxTool extends ToolboxTool {
 /**
  * A reminder tool stored in a toolbox.
  */
+@extension("x-ms-foundry-meta", PreviewTool)
 model ReminderPreviewToolboxTool extends ToolboxTool {
   type: ToolboxReminderPreviewToolType;
 }
@@ -197,6 +203,7 @@ model ReminderPreviewToolboxTool extends ToolboxTool {
 /**
  * A WorkIQ tool stored in a toolbox.
  */
+@extension("x-ms-foundry-meta", PreviewTool)
 model WorkIQPreviewToolboxTool extends ToolboxTool {
   type: ToolboxWorkIQPreviewToolType;
 
@@ -206,6 +213,7 @@ model WorkIQPreviewToolboxTool extends ToolboxTool {
 /**
  * A FabricIQ tool stored in a toolbox.
  */
+@extension("x-ms-foundry-meta", PreviewTool)
 model FabricIQPreviewToolboxTool extends ToolboxTool {
   type: ToolboxFabricIQPreviewToolType;
 
@@ -215,11 +223,22 @@ model FabricIQPreviewToolboxTool extends ToolboxTool {
 /**
  * A toolbox search tool stored in a toolbox.
  */
+@extension("x-ms-foundry-meta", PreviewTool)
 model ToolboxSearchPreviewToolboxTool extends ToolboxTool {
   /**
    * The type of the tool. Always `toolbox_search_preview`.
    */
   type: ToolboxSearchPreviewToolType;
+}
+
+/**
+ * A toolbox search tool stored in a toolbox.
+ */
+model ToolSearchToolboxTool extends ToolboxTool {
+  /**
+   * The type of the tool. Always `toolbox_search`.
+   */
+  type: ToolboxSearchToolType;
 }
 @doc("Policy configuration for a toolbox, including content safety and other governance settings.")
 model ToolboxPolicies {

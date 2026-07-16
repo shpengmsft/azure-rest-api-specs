@@ -1,4 +1,4 @@
-import "../openai-responses/models.tsp";
+import "../openai/responses/models.tsp";
 import "../common/servicepatterns.tsp";
 
 using TypeSpec.Http;
@@ -10,11 +10,11 @@ namespace Azure.AI.Projects;
 const AllConditionalAgentDefinitionPreviews = #{
   conditional_previews: #[
     AgentDefinitionOptInKeys.workflow_agents_v1_preview,
-    AgentDefinitionOptInKeys.external_agents_v1_preview
+    AgentDefinitionOptInKeys.external_agents_v1_preview,
+    AgentDefinitionOptInKeys.draft_agents_v1_preview
   ],
 };
 
-@extension("x-ms-foundry-meta", AllConditionalAgentDefinitionPreviews)
 model CreateAgentVersionRequest {
   ...MetadataPropertyForRequest;
 
@@ -28,6 +28,13 @@ model CreateAgentVersionRequest {
 
   @doc("The blueprint reference for the agent.")
   blueprint_reference?: AgentBlueprintReference;
+
+  @doc("(Preview) Whether this agent version is a draft (candidate) rather than a release. The service defaults to `false` if a value is not specified by the caller. Draft versions are recorded but excluded from default 'latest' resolution and are not auto-promoted.")
+  @extension(
+    "x-ms-foundry-meta",
+    #{ conditional_previews: #[AgentDefinitionOptInKeys.draft_agents_v1_preview] }
+  )
+  draft?: boolean = false;
 }
 
 model CreateAgentVersionFromManifestRequest {
@@ -84,8 +91,9 @@ model CreateAgentRequest {
   agent_card?: AgentCard;
 }
 
+@extension("x-ms-foundry-meta", AllConditionalAgentDefinitionPreviews)
 model UpdateAgentRequest {
-  ...CreateAgentVersionRequest;
+  ...OmitProperties<CreateAgentVersionRequest, "draft">;
 }
 
 model PatchAgentRequest {
@@ -178,6 +186,13 @@ model AgentVersionObject {
 
   definition: AgentDefinition;
 
+  @doc("Whether this agent version is a draft (candidate) rather than a release. Draft versions are recorded but excluded from default 'latest' resolution and are not auto-promoted. Defaults to false.")
+  @extension(
+    "x-ms-foundry-meta",
+    #{ conditional_previews: #[AgentDefinitionOptInKeys.draft_agents_v1_preview] }
+  )
+  draft?: boolean = false;
+
   @doc("The provisioning status of the agent version. Defaults to 'active' for non-hosted agents. For hosted agents, reflects infrastructure readiness.")
   status?: AgentVersionStatus;
 
@@ -250,7 +265,6 @@ model RaiConfig {
 }
 
 @discriminator("kind")
-@extension("x-ms-foundry-meta", AllConditionalAgentDefinitionPreviews)
 model AgentDefinition {
   kind: AgentKind;
 
@@ -394,12 +408,6 @@ model ExternalAgentDefinition extends AgentDefinition {
 @doc("The hosted agent definition.")
 model HostedAgentDefinition extends AgentDefinition {
   kind: AgentKind.hosted;
-
-  @doc("""
-    An array of tools the hosted agent's model may call while generating a response. You
-    can specify which tool to use by setting the `tool_choice` parameter.
-    """)
-  tools?: OpenAI.Tool[];
 
   /**
    * When specify the `cpu` and `memory`, the total CPU and memory allocated to all the containers in a container app must add up to one of the following combinations.
@@ -664,6 +672,20 @@ model AgentIdentity {
 
   @doc("The client ID of the agent instance. Also referred to as the instance ID")
   client_id: string;
+
+  @doc("The status of the agent identity. Present for both the agent instance identity and the agent blueprint.")
+  status?: AgentIdentityStatus;
+}
+
+@doc("The status of an agent identity, applicable to both the agent instance identity and the agent blueprint.")
+union AgentIdentityStatus {
+  string,
+
+  @doc("The agent identity is active and can be used to access resources.")
+  active: "active",
+
+  @doc("The agent identity is disabled and cannot be used to access resources.")
+  disabled: "disabled",
 }
 
 union AgentBlueprintReferenceType {
